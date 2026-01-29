@@ -51,7 +51,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  // TUS LLAVES CONFIGURADAS
+  // TUS LLAVES DEL PROYECTO STUDIO-8207835653
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
     authDomain: "studio-8207835653-3046c.firebaseapp.com",
@@ -80,8 +80,8 @@
       opt.value = opt.textContent = `${h12}:${m} ${ampm}`;
       horaSelect.appendChild(opt);
     };
-    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); // Rango Mañana
-    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); // Rango Tarde
+    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); 
+    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); 
   }
 
   async function cargarOcupadas() {
@@ -96,7 +96,7 @@
           opt.textContent += " (Ocupado)";
         }
       });
-    } catch (e) { console.error("Error al cargar citas:", e); }
+    } catch (e) { console.error("Error cargando citas:", e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -110,15 +110,13 @@
 
     if(!nombre) return alert("Por favor, escribe tu nombre.");
 
-    // Enviar WhatsApp
     const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
 
-    // Guardar en Firebase
     try {
       await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
       cargarOcupadas();
-    } catch(e) { console.error("Error al guardar cita:", e); }
+    } catch(e) { console.error("Error guardando cita:", e); }
   }
 
   window.compartirPagina = function() {
@@ -128,3 +126,4 @@
 </script>
 </body>
 </html>
+

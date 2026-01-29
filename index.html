@@ -11,17 +11,9 @@
     p { text-align: center; font-size: 14px; color: #ccc; }
     label { display: block; margin-top: 14px; color: #d4af37; font-weight: bold; }
     input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; background: #0f0f0f; color: #fff; border: 1px solid #333; }
-    
-    /* Botón Reservar */
     .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; background: #d4af37; color: #111; font-weight: bold; cursor: pointer; border: none; }
-    
-    /* Botón Compartir */
     .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; background: transparent; color: #d4af37; font-weight: 600; cursor: pointer; border: 1px solid #d4af37; }
-    
-    /* Estilo para horas ocupadas */
     option:disabled { color: #555; background: #222; }
-
-    /* Info inferior */
     .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
   </style>
 </head>
@@ -47,7 +39,6 @@
   <select id="hora"></select>
 
   <button class="btn-reservar" onclick="reservar()">Reservar por WhatsApp</button>
-
   <button class="btn-compartir" onclick="compartirPagina()">📤 Compartir con un amigo</button>
 
   <div class="footer-info">
@@ -60,13 +51,14 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
+  // TUS LLAVES CONFIGURADAS
   const firebaseConfig = {
-    apiKey: "AIzaSyCxTFstgphypWGMT-9XY98G1EBs7iHybws",
-    authDomain: "jf-classic-barberia.firebaseapp.com",
-    projectId: "jf-classic-barberia",
-    storageBucket: "jf-classic-barberia.firebasestorage.app",
-    messagingSenderId: "1055005410307",
-    appId: "1:1055005410307:web:8e3322f05f03a5d458ba36"
+    apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
+    authDomain: "studio-8207835653-3046c.firebaseapp.com",
+    projectId: "studio-8207835653-3046c",
+    storageBucket: "studio-8207835653-3046c.firebasestorage.app",
+    messagingSenderId: "1083418746261",
+    appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -88,21 +80,23 @@
       opt.value = opt.textContent = `${h12}:${m} ${ampm}`;
       horaSelect.appendChild(opt);
     };
-    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); // Mañana
-    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); // Tarde
+    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); // Rango Mañana
+    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); // Rango Tarde
   }
 
   async function cargarOcupadas() {
     generarHoras();
-    const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
-    const snap = await getDocs(q);
-    const ocupadas = snap.docs.map(d => d.data().hora);
-    [...horaSelect.options].forEach(opt => {
-      if(ocupadas.includes(opt.value)) {
-        opt.disabled = true;
-        opt.textContent += " (Ocupado)";
-      }
-    });
+    try {
+      const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
+      const snap = await getDocs(q);
+      const ocupadas = snap.docs.map(d => d.data().hora);
+      [...horaSelect.options].forEach(opt => {
+        if(ocupadas.includes(opt.value)) {
+          opt.disabled = true;
+          opt.textContent += " (Ocupado)";
+        }
+      });
+    } catch (e) { console.error("Error al cargar citas:", e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -120,9 +114,11 @@
     const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
 
-    // Guardar en Firebase para bloquear
-    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-    cargarOcupadas();
+    // Guardar en Firebase
+    try {
+      await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
+      cargarOcupadas();
+    } catch(e) { console.error("Error al guardar cita:", e); }
   }
 
   window.compartirPagina = function() {

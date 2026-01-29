@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>JF Classic Barbería - Reservas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0b0b, #1a1a1a);
+      color: #f5f5f5;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 500px;
+      margin: auto;
+      background: #151515;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(212,175,55,0.15);
+      border: 1px solid #2a2a2a;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 10px;
+    }
+
+    p {
+      text-align: center;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: 600;
+      color: #d4af37;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #0f0f0f;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    /* Botón principal de Reserva */
+    .btn-reservar {
+      width: 100%;
+      padding: 12px;
+      margin-top: 22px;
+      border-radius: 10px;
+      border: none;
+      background: #d4af37;
+      color: #111;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    /* Botón de Compartir (Nuevo) */
+    .btn-compartir {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border-radius: 10px;
+      border: 1px solid #d4af37;
+      background: transparent;
+      color: #d4af37;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+
+    option:disabled {
+      color: #555;
+      background-color: #222;
+    }
+
+    .footer-info {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>JF Classic Barbería 💈</h1>
+  <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
+
+  <label>Nombre</label>
+  <input id="nombre" placeholder="Escribe tu nombre">
+
+  <label>Servicio</label>
+  <select id="servicio">
+    <option value="Corte $20.000">Corte $20.000</option>
+    <option value="Corte y barba $27.000">Corte y barba $27.000</option>
+  </select>
+
+  <label>Día</label>
+  <input type="date" id="fecha">
+
+  <label>Hora</label>
+  <select id="hora"></select>
+
+  <button class="btn-reservar" onclick="reservar()">Reservar por WhatsApp</button>
+
+  <button class="btn-compartir" onclick="compartirPagina()">📤 Compartir con un amigo</button>
+
+  <div class="footer-info">
+    <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxTFstgphypWGMT-9XY98G1EBs7iHybws",
+    authDomain: "jf-classic-barberia.firebaseapp.com",
+    projectId: "jf-classic-barberia",
+    storageBucket: "jf-classic-barberia.firebasestorage.app",
+    messagingSenderId: "1055005410307",
+    appId: "1:1055005410307:web:8e3322f05f03a5d458ba36"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const horaSelect = document.getElementById("hora");
+  const fechaInput = document.getElementById("fecha");
+
+  const hoy = new Date();
+  const fechaHoy = hoy.toISOString().split('T')[0];
+  fechaInput.setAttribute('min', fechaHoy);
+  fechaInput.value = fechaHoy;
+
+  function agregarHora(valor) {
+    let h = Math.floor(valor);
+    let m = valor % 1 === 0 ? "00" : "30";
+    let ampm = h >= 12 ? "PM" : "AM";
+    let h12 = h > 12 ? h - 12 : h;
+    if (h12 === 0) h12 = 12;
+
+    const texto = `${h12}:${m} ${ampm}`;
+    const option = document.createElement("option");
+    option.value = texto;
+    option.textContent = texto;
+    horaSelect.appendChild(option);
+  }
+
+  function generarHoras() {
+    horaSelect.innerHTML = "";
+    for (let t = 9.5; t <= 13.5; t += 0.5) { agregarHora(t); } // 9:30 AM - 1:30 PM
+    for (let t = 15; t <= 19.5; t += 0.5) { agregarHora(t); } // 3:00 PM - 7:30 PM
+  }
+
+  async function cargarHorasOcupadas() {
+    const fecha = fechaInput.value;
+    if (!fecha) return;
+    generarHoras();
+    const q = query(collection(db, "citas"), where("fecha", "==", fecha));
+    const snapshot = await getDocs(q);
+    const ocupadas = snapshot.docs.map(d => d.data().hora);
+
+    [...horaSelect.options].forEach(opt => {
+      if (ocupadas.includes(opt.value)) {
+        opt.disabled = true;
+        opt.textContent += " (Ocupado)";
+      }
+    });
+  }
+
+  cargarHorasOcupadas();
+  fechaInput.addEventListener("change", cargarHorasOcupadas);
+
+  window.reservar = async function () {
+    const nombre = document.getElementById("nombre").value;
+    const servicio = document.getElementById("servicio").value;
+    const fecha = fechaInput.value;
+    const hora = horaSelect.value;
+
+    if (!nombre || !fecha || !hora) {
+      alert("Por favor, ingresa tu nombre.");
+      return;
+    }
+
+    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
+
+    const msg = `Hola, soy ${nombre}. Quiero apartar cita el día ${fecha} a las ${hora}. Servicio: ${servicio}`;
+    const url = `https://wa.me/573008612063?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+    cargarHorasOcupadas();
+  }
+
+  // FUNCIÓN PARA COMPARTIR EL ENLACE
+  window.compartirPagina = function() {
+    const urlPagina = window.location.href;
+    const textoCompartir = `¡Hola! Te recomiendo la Barbería JF Classic. Puedes agendar tu cita aquí: ${urlPagina}`;
+    const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(textoCompartir)}`;
+    window.open(urlWhatsApp, "_blank");
+  }
+</script>
+
+</body>
+</html>

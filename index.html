@@ -5,16 +5,24 @@
   <title>JF Classic Barbería - Reservas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #0b0b0b, #1a1a1a); color: #f5f5f5; padding: 20px; }
-    .card { max-width: 500px; margin: auto; background: #151515; padding: 24px; border-radius: 14px; box-shadow: 0 0 20px rgba(212,175,55,0.15); border: 1px solid #2a2a2a; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0b0b0b; color: #f5f5f5; padding: 20px; }
+    .card { max-width: 500px; margin: auto; background: #151515; padding: 24px; border-radius: 14px; border: 1px solid #2a2a2a; box-shadow: 0 0 20px rgba(212,175,55,0.15); }
     h1 { text-align: center; color: #d4af37; margin-bottom: 10px; }
     p { text-align: center; font-size: 14px; color: #ccc; }
-    label { display: block; margin-top: 14px; font-weight: 600; color: #d4af37; }
-    input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #333; background: #0f0f0f; color: #fff; font-size: 15px; }
-    button { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; border: none; background: #d4af37; color: #111; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; }
-    button:hover { background: #b8962e; transform: scale(1.02); }
-    .btn-share { background: transparent; border: 1px solid #d4af37; color: #d4af37; margin-top: 12px; }
-    .footer-info { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }
+    label { display: block; margin-top: 14px; color: #d4af37; font-weight: bold; }
+    input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; background: #0f0f0f; color: #fff; border: 1px solid #333; }
+    
+    /* Botón Reservar */
+    .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; background: #d4af37; color: #111; font-weight: bold; cursor: pointer; border: none; }
+    
+    /* Botón Compartir */
+    .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; background: transparent; color: #d4af37; font-weight: 600; cursor: pointer; border: 1px solid #d4af37; }
+    
+    /* Estilo para horas ocupadas */
+    option:disabled { color: #555; background: #222; }
+
+    /* Info inferior */
+    .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
   </style>
 </head>
 <body>
@@ -24,7 +32,7 @@
   <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
 
   <label>Nombre</label>
-  <input id="nombre" placeholder="Escribe tu nombre">
+  <input id="nombre" placeholder="Tu nombre">
 
   <label>Servicio</label>
   <select id="servicio">
@@ -38,73 +46,89 @@
   <label>Hora</label>
   <select id="hora"></select>
 
-  <button onclick="reservar()">Reservar por WhatsApp</button>
-  <button class="btn-share" onclick="compartirPagina()">📤 Compartir con un amigo</button>
+  <button class="btn-reservar" onclick="reservar()">Reservar por WhatsApp</button>
+
+  <button class="btn-compartir" onclick="compartirPagina()">📤 Compartir con un amigo</button>
 
   <div class="footer-info">
     <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
+    <p>La cita se confirma automáticamente por chat.</p>
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCxTFstgphypWGMT-9XY98G1EBs7iHybws",
+    authDomain: "jf-classic-barberia.firebaseapp.com",
+    projectId: "jf-classic-barberia",
+    storageBucket: "jf-classic-barberia.firebasestorage.app",
+    messagingSenderId: "1055005410307",
+    appId: "1:1055005410307:web:8e3322f05f03a5d458ba36"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
   const horaSelect = document.getElementById("hora");
   const fechaInput = document.getElementById("fecha");
 
-  // Bloquear días pasados
-  const hoy = new Date();
-  const fechaHoy = hoy.toISOString().split('T')[0];
-  fechaInput.setAttribute('min', fechaHoy);
-  fechaInput.value = fechaHoy;
+  const hoy = new Date().toISOString().split('T')[0];
+  fechaInput.setAttribute('min', hoy);
+  fechaInput.value = hoy;
 
-  // Función que crea las horas como las tenías antes
-  function agregarHora(valor) {
-    let h = Math.floor(valor);
-    let m = valor % 1 === 0 ? "00" : "30";
-    let ampm = h >= 12 ? "PM" : "AM";
-    let h12 = h > 12 ? h - 12 : h;
-    if (h12 === 0) h12 = 12;
-
-    const texto = `${h12}:${m} ${ampm}`;
-    const option = document.createElement("option");
-    option.value = texto;
-    option.textContent = texto;
-    horaSelect.appendChild(option);
-  }
-
-  // Generar todos tus rangos de horas
   function generarHoras() {
     horaSelect.innerHTML = "";
-    // Mañana: 9:30 a 1:30
-    for (let t = 9.5; t <= 13.5; t += 0.5) { agregarHora(t); }
-    // Tarde: 3:00 a 7:30
-    for (let t = 15; t <= 19.5; t += 0.5) { agregarHora(t); }
+    const agregar = (v) => {
+      let h = Math.floor(v), m = v % 1 === 0 ? "00" : "30";
+      let ampm = h >= 12 ? "PM" : "AM", h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      let opt = document.createElement("option");
+      opt.value = opt.textContent = `${h12}:${m} ${ampm}`;
+      horaSelect.appendChild(opt);
+    };
+    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); // Mañana
+    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); // Tarde
   }
 
-  // Ejecutar al cargar
-  generarHoras();
+  async function cargarOcupadas() {
+    generarHoras();
+    const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
+    const snap = await getDocs(q);
+    const ocupadas = snap.docs.map(d => d.data().hora);
+    [...horaSelect.options].forEach(opt => {
+      if(ocupadas.includes(opt.value)) {
+        opt.disabled = true;
+        opt.textContent += " (Ocupado)";
+      }
+    });
+  }
 
-  function reservar() {
+  fechaInput.addEventListener("change", cargarOcupadas);
+  cargarOcupadas();
+
+  window.reservar = async function() {
     const nombre = document.getElementById("nombre").value;
-    const servicio = document.getElementById("servicio").value;
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
+    const servicio = document.getElementById("servicio").value;
 
-    if (!nombre || !fecha || !hora) {
-      alert("Por favor, ingresa tu nombre.");
-      return;
-    }
+    if(!nombre) return alert("Por favor, escribe tu nombre.");
 
-    // Armar el mensaje para WhatsApp
-    const msg = `Hola, soy ${nombre}. Quiero apartar cita el día ${fecha} a las ${hora}. Servicio: ${servicio}`;
-    const url = `https://wa.me/573008612063?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+    // Enviar WhatsApp
+    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
+    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
+
+    // Guardar en Firebase para bloquear
+    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
+    cargarOcupadas();
   }
 
-  function compartirPagina() {
-    const textoCompartir = `¡Te recomiendo la Barbería JF Classic! Agenda tu cita aquí: ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(textoCompartir)}`, "_blank");
+  window.compartirPagina = function() {
+    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
   }
 </script>
-
 </body>
 </html>

@@ -17,8 +17,8 @@
     .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
   </style>
 </head>
-<body>
 
+<body>
 <div class="card">
   <h1>JF Classic Barbería 💈</h1>
   <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
@@ -51,7 +51,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  // TUS LLAVES DEL PROYECTO STUDIO-8207835653
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
     authDomain: "studio-8207835653-3046c.firebaseapp.com",
@@ -73,15 +72,25 @@
 
   function generarHoras() {
     horaSelect.innerHTML = "";
+
+    const fecha = new Date(fechaInput.value + "T00:00:00");
+    const esDomingo = fecha.getDay() === 0;
+
     const agregar = (v) => {
       let h = Math.floor(v), m = v % 1 === 0 ? "00" : "30";
-      let ampm = h >= 12 ? "PM" : "AM", h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      let ampm = h >= 12 ? "PM" : "AM";
+      let h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
       let opt = document.createElement("option");
       opt.value = opt.textContent = `${h12}:${m} ${ampm}`;
       horaSelect.appendChild(opt);
     };
-    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t); 
-    for (let t = 15; t <= 19.5; t += 0.5) agregar(t); 
+
+    if (esDomingo) {
+      for (let t = 9.5; t <= 12; t += 0.5) agregar(t);
+    } else {
+      for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
+      for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
+    }
   }
 
   async function cargarOcupadas() {
@@ -91,12 +100,14 @@
       const snap = await getDocs(q);
       const ocupadas = snap.docs.map(d => d.data().hora);
       [...horaSelect.options].forEach(opt => {
-        if(ocupadas.includes(opt.value)) {
+        if (ocupadas.includes(opt.value)) {
           opt.disabled = true;
           opt.textContent += " (Ocupado)";
         }
       });
-    } catch (e) { console.error("Error cargando citas:", e); }
+    } catch (e) {
+      console.error("Error cargando citas:", e);
+    }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -108,7 +119,7 @@
     const hora = horaSelect.value;
     const servicio = document.getElementById("servicio").value;
 
-    if(!nombre) return alert("Por favor, escribe tu nombre.");
+    if (!nombre) return alert("Por favor, escribe tu nombre.");
 
     const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
@@ -116,7 +127,9 @@
     try {
       await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
       cargarOcupadas();
-    } catch(e) { console.error("Error guardando cita:", e); }
+    } catch(e) {
+      console.error("Error guardando cita:", e);
+    }
   }
 
   window.compartirPagina = function() {
@@ -126,4 +139,3 @@
 </script>
 </body>
 </html>
-

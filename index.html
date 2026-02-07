@@ -67,17 +67,18 @@
   const fechaInput = document.getElementById("fecha");
 
   const hoy = new Date().toISOString().split('T')[0];
-  fechaInput.setAttribute('min', hoy);
+  fechaInput.min = hoy;
   fechaInput.value = hoy;
 
   function generarHoras() {
     horaSelect.innerHTML = "";
 
-    const fecha = new Date(fechaInput.value + "T00:00:00");
-    const esDomingo = fecha.getDay() === 0;
+    const fechaSeleccionada = new Date(fechaInput.value + "T00:00");
+    const esDomingo = fechaSeleccionada.getDay() === 0;
 
     const agregar = (v) => {
-      let h = Math.floor(v), m = v % 1 === 0 ? "00" : "30";
+      let h = Math.floor(v);
+      let m = v % 1 === 0 ? "00" : "30";
       let ampm = h >= 12 ? "PM" : "AM";
       let h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
       let opt = document.createElement("option");
@@ -85,35 +86,33 @@
       horaSelect.appendChild(opt);
     };
 
-    if (esDomingo) {
-      for (let t = 9.5; t <= 12; t += 0.5) agregar(t);
-    } else {
-      for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
+    // Mañana
+    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
+
+    // Tarde SOLO si NO es domingo
+    if (!esDomingo) {
       for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
     }
   }
 
   async function cargarOcupadas() {
     generarHoras();
-    try {
-      const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
-      const snap = await getDocs(q);
-      const ocupadas = snap.docs.map(d => d.data().hora);
-      [...horaSelect.options].forEach(opt => {
-        if (ocupadas.includes(opt.value)) {
-          opt.disabled = true;
-          opt.textContent += " (Ocupado)";
-        }
-      });
-    } catch (e) {
-      console.error("Error cargando citas:", e);
-    }
+    const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
+    const snap = await getDocs(q);
+    const ocupadas = snap.docs.map(d => d.data().hora);
+
+    [...horaSelect.options].forEach(opt => {
+      if (ocupadas.includes(opt.value)) {
+        opt.disabled = true;
+        opt.textContent += " (Ocupado)";
+      }
+    });
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
   cargarOcupadas();
 
-  window.reservar = async function() {
+  window.reservar = async function () {
     const nombre = document.getElementById("nombre").value;
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
@@ -124,18 +123,14 @@
     const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
 
-    try {
-      await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-      cargarOcupadas();
-    } catch(e) {
-      console.error("Error guardando cita:", e);
-    }
-  }
+    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
+    cargarOcupadas();
+  };
 
-  window.compartirPagina = function() {
+  window.compartirPagina = function () {
     const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-  }
+  };
 </script>
 </body>
 </html>

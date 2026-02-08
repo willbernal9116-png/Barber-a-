@@ -2,40 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Agenda del Barbero</title>
+  <title>Agenda de Citas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
+      background:#111;
+      color:#fff;
       font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
+      padding:20px;
     }
     table {
-      width: 100%;
+      width:100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top:20px;
     }
     th, td {
-      border: 1px solid #444;
-      padding: 8px;
-      text-align: center;
+      border:1px solid #444;
+      padding:8px;
+      text-align:center;
     }
     th {
-      background: #222;
-    }
-    tr:nth-child(even) {
-      background: #1a1a1a;
+      background:#222;
     }
   </style>
 </head>
 <body>
 
-<h1>📋 Agenda de Citas</h1>
+<h2>📋 Agenda de Citas</h2>
 
 <table>
   <thead>
@@ -46,51 +44,37 @@
       <th>Teléfono</th>
     </tr>
   </thead>
-  <tbody id="lista-citas"></tbody>
+  <tbody id="listaCitas">
+  </tbody>
 </table>
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } 
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-  // 🔴 PEGA AQUÍ TU CONFIG REAL DE FIREBASE (LA MISMA DEL INDEX)
+<script>
+  // 🔴 CONFIGURACIÓN FIREBASE (NO LA CAMBIE)
   const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_DOMINIO.firebaseapp.com",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_BUCKET.appspot.com",
-    messagingSenderId: "TU_ID",
-    appId: "TU_APP_ID"
+    apiKey: "PEGUE_AQUI_SU_APIKEY",
+    authDomain: "PEGUE_AQUI",
+    projectId: "PEGUE_AQUI",
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  const tabla = document.getElementById("lista-citas");
+  const lista = document.getElementById("listaCitas");
 
-  async function cargarCitas() {
-    const q = query(collection(db, "citas"), orderBy("fecha"), orderBy("hora"));
-    const snapshot = await getDocs(q);
-
-    tabla.innerHTML = "";
-
+  db.collection("citas").orderBy("fecha").onSnapshot(snapshot => {
+    lista.innerHTML = "";
     snapshot.forEach(doc => {
-      const c = doc.data();
-
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${c.fecha || ""}</td>
-        <td>${c.hora || ""}</td>
-        <td>${c.nombre || ""}</td>
-        <td>${c.telefono || ""}</td>
+      const d = doc.data();
+      lista.innerHTML += `
+        <tr>
+          <td>${d.fecha || ""}</td>
+          <td>${d.hora || ""}</td>
+          <td>${d.nombre || ""}</td>
+          <td>${d.telefono || ""}</td>
+        </tr>
       `;
-      tabla.appendChild(fila);
     });
-  }
-
-  cargarCitas();
+  });
 </script>
 
 </body>

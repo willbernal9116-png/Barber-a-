@@ -16,6 +16,9 @@
       font-family: Arial, sans-serif;
       padding:20px;
     }
+    h2 {
+      text-align:center;
+    }
     table {
       width:100%;
       border-collapse: collapse;
@@ -28,6 +31,9 @@
     }
     th {
       background:#222;
+    }
+    tr:nth-child(even) {
+      background:#1a1a1a;
     }
   </style>
 </head>
@@ -44,16 +50,15 @@
       <th>Teléfono</th>
     </tr>
   </thead>
-  <tbody id="listaCitas">
-  </tbody>
+  <tbody id="listaCitas"></tbody>
 </table>
 
 <script>
-  // 🔴 CONFIGURACIÓN FIREBASE (NO LA CAMBIE)
+  // 🔴 PEGA AQUÍ TU CONFIGURACIÓN REAL DE FIREBASE
   const firebaseConfig = {
-    apiKey: "PEGUE_AQUI_SU_APIKEY",
-    authDomain: "PEGUE_AQUI",
-    projectId: "PEGUE_AQUI",
+    apiKey: "PEGA_AQUI_TU_API_KEY",
+    authDomain: "PEGA_AQUI_TU_AUTH_DOMAIN",
+    projectId: "PEGA_AQUI_TU_PROJECT_ID"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -61,16 +66,28 @@
 
   const lista = document.getElementById("listaCitas");
 
-  db.collection("citas").orderBy("fecha").onSnapshot(snapshot => {
+  // ✅ CONSULTA SIMPLE: MUESTRA TODAS LAS CITAS SIN FILTROS
+  db.collection("citas").onSnapshot(snapshot => {
     lista.innerHTML = "";
+
+    if (snapshot.empty) {
+      lista.innerHTML = `
+        <tr>
+          <td colspan="4">No hay citas registradas</td>
+        </tr>
+      `;
+      return;
+    }
+
     snapshot.forEach(doc => {
       const d = doc.data();
+
       lista.innerHTML += `
         <tr>
-          <td>${d.fecha || ""}</td>
-          <td>${d.hora || ""}</td>
-          <td>${d.nombre || ""}</td>
-          <td>${d.telefono || ""}</td>
+          <td>${d.fecha || "-"}</td>
+          <td>${d.hora || "-"}</td>
+          <td>${d.nombre || "-"}</td>
+          <td>${d.telefono || "-"}</td>
         </tr>
       `;
     });

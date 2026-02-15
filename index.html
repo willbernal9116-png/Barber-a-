@@ -15,6 +15,7 @@
     .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; background: transparent; color: #d4af37; font-weight: 600; cursor: pointer; border: 1px solid #d4af37; }
     option:disabled { color: #555; background: #222; }
     .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
+    .iframe-container { margin-top: 40px; }
   </style>
 </head>
 
@@ -47,6 +48,17 @@
   </div>
 </div>
 
+<!-- Contenedor del iframe -->
+<div class="iframe-container">
+  <h2 style="text-align: center; color: #d4af37;">Agenda de Citas</h2>
+  <iframe 
+    src="TU_ENLACE_AQUÍ" 
+    width="100%" 
+    height="600px" 
+    style="border:none;">
+  </iframe>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
@@ -54,83 +66,7 @@
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
     authDomain: "studio-8207835653-3046c.firebaseapp.com",
-    projectId: "studio-8207835653-3046c",
-    storageBucket: "studio-8207835653-3046c.firebasestorage.app",
-    messagingSenderId: "1083418746261",
-    appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
-  };
+    projectId: "studio-8207835653",
+    storageBucket:
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
 
-  const horaSelect = document.getElementById("hora");
-  const fechaInput = document.getElementById("fecha");
-
-  const hoy = new Date().toISOString().split('T')[0];
-  fechaInput.min = hoy;
-  fechaInput.value = hoy;
-
-  function generarHoras() {
-    horaSelect.innerHTML = "";
-
-    const fechaSeleccionada = new Date(fechaInput.value + "T00:00");
-    const esDomingo = fechaSeleccionada.getDay() === 0;
-
-    const agregar = (v) => {
-      let h = Math.floor(v);
-      let m = v % 1 === 0 ? "00" : "30";
-      let ampm = h >= 12 ? "PM" : "AM";
-      let h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-      let opt = document.createElement("option");
-      opt.value = opt.textContent = `${h12}:${m} ${ampm}`;
-      horaSelect.appendChild(opt);
-    };
-
-    // Mañana
-    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
-
-    // Tarde SOLO si NO es domingo
-    if (!esDomingo) {
-      for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
-    }
-  }
-
-  async function cargarOcupadas() {
-    generarHoras();
-    const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
-    const snap = await getDocs(q);
-    const ocupadas = snap.docs.map(d => d.data().hora);
-
-    [...horaSelect.options].forEach(opt => {
-      if (ocupadas.includes(opt.value)) {
-        opt.disabled = true;
-        opt.textContent += " (Ocupado)";
-      }
-    });
-  }
-
-  fechaInput.addEventListener("change", cargarOcupadas);
-  cargarOcupadas();
-
-  window.reservar = async function () {
-    const nombre = document.getElementById("nombre").value;
-    const fecha = fechaInput.value;
-    const hora = horaSelect.value;
-    const servicio = document.getElementById("servicio").value;
-
-    if (!nombre) return alert("Por favor, escribe tu nombre.");
-
-    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
-    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
-
-    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-    cargarOcupadas();
-  };
-
-  window.compartirPagina = function () {
-    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-  };
-</script>
-</body>
-</html>

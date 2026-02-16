@@ -17,8 +17,8 @@
     .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
   </style>
 </head>
-
 <body>
+
 <div class="card">
   <h1>JF Classic Barbería 💈</h1>
   <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
@@ -67,70 +67,89 @@
   const fechaInput = document.getElementById("fecha");
 
   const hoy = new Date().toISOString().split('T')[0];
-  fechaInput.min = hoy;
+  fechaInput.setAttribute('min', hoy);
   fechaInput.value = hoy;
 
   function generarHoras() {
     horaSelect.innerHTML = "";
-
-    const fechaSeleccionada = new Date(fechaInput.value + "T00:00");
-    const esDomingo = fechaSeleccionada.getDay() === 0;
 
     const agregar = (v) => {
       let h = Math.floor(v);
       let m = v % 1 === 0 ? "00" : "30";
       let ampm = h >= 12 ? "PM" : "AM";
       let h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+
+      let textoHora = `${h12}:${m} ${ampm}`;
+
       let opt = document.createElement("option");
-      opt.value = opt.textContent = ${h12}:${m} ${ampm};
+      opt.value = textoHora;
+      opt.textContent = textoHora;
       horaSelect.appendChild(opt);
     };
 
-    // Mañana
     for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
-
-    // Tarde SOLO si NO es domingo
-    if (!esDomingo) {
-      for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
-    }
+    for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
   }
 
   async function cargarOcupadas() {
     generarHoras();
-    const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
-    const snap = await getDocs(q);
-    const ocupadas = snap.docs.map(d => d.data().hora);
 
-    [...horaSelect.options].forEach(opt => {
-      if (ocupadas.includes(opt.value)) {
-        opt.disabled = true;
-        opt.textContent += " (Ocupado)";
-      }
-    });
+    try {
+      const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
+      const snap = await getDocs(q);
+
+      const ocupadas = snap.docs.map(d => d.data().hora);
+
+      [...horaSelect.options].forEach(opt => {
+        if (ocupadas.includes(opt.value)) {
+          opt.disabled = true;
+          opt.textContent += " (Ocupado)";
+        }
+      });
+
+    } catch (e) {
+      console.error("Error al cargar citas:", e);
+    }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
   cargarOcupadas();
 
-  window.reservar = async function () {
+  window.reservar = async function() {
     const nombre = document.getElementById("nombre").value;
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
     const servicio = document.getElementById("servicio").value;
 
-    if (!nombre) return alert("Por favor, escribe tu nombre.");
+    if (!nombre) {
+      alert("Por favor, escribe tu nombre.");
+      return;
+    }
 
-    const msg = Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio};
-    window.open(https://wa.me/573008612063?text=${encodeURIComponent(msg)}, "_blank");
+    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
+    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
 
-    await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-    cargarOcupadas();
-  };
+    try {
+      await addDoc(collection(db, "citas"), {
+        nombre,
+        servicio,
+        fecha,
+        hora
+      });
 
-  window.compartirPagina = function () {
-    const texto = ¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href};
-    window.open(https://wa.me/?text=${encodeURIComponent(texto)}, "_blank");
-  };
+      cargarOcupadas();
+
+    } catch (e) {
+      console.error("Error al guardar cita:", e);
+    }
+  }
+
+  window.compartirPagina = function() {
+    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+  }
+
 </script>
+
 </body>
 </html>

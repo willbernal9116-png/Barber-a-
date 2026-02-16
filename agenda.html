@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda de Citas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Estilos CSS -->
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #222;
+    }
+    tr:nth-child(even) {
+      background: #1a1a1a;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
+      authDomain: "studio-8207835653-3046c.firebaseapp.com",
+      projectId: "studio-8207835653",
+      storageBucket: "studio-8207835653.firebasestorage.app",
+      messagingSenderId: "1083418746261",
+      appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Consultar las citas
+    const lista = document.getElementById("listaCitas");
+
+    async function cargarCitas() {
+      lista.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "citas"));
+      if (snapshot.empty) {
+        lista.innerHTML = `
+          <tr>
+            <td colspan="4">No hay citas registradas</td>
+          </tr>
+        `;
+        return;
+      }
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        lista.innerHTML += `
+          <tr>
+            <td>${d.fecha || "-"}</td>
+            <td>${d.hora || "-"}</td>
+            <td>${d.nombre || "-"}</td>
+            <td>${d.telefono || "-"}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Cargar las citas al iniciar
+    cargarCitas();
+  </script>
+</head>
+<body>
+
+  <h2>📋 Agenda de Citas</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+      </tr>
+    </thead>
+    <tbody id="listaCitas"></tbody>
+  </table>
+
+</body>
+</html>

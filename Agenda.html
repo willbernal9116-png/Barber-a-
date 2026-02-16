@@ -33,18 +33,34 @@
       background: #1a1a1a;
     }
   </style>
+</head>
+<body>
+
+  <h2>📋 Agenda de Citas</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Nombre</th>
+        <th>Servicio</th>
+      </tr>
+    </thead>
+    <tbody id="listaCitas"></tbody>
+  </table>
 
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-    // Configuración de Firebase
+    // Configuración de Firebase - DEBE SER IGUAL A index.html
     const firebaseConfig = {
       apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
       authDomain: "studio-8207835653-3046c.firebaseapp.com",
-      projectId: "studio-8207835653",
-      storageBucket: "studio-8207835653.firebasestorage.app",
+      projectId: "studio-8207835653-3046c",
+      storageBucket: "studio-8207835653-3046c.firebasestorage.app",
       messagingSenderId: "1083418746261",
       appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
     };
@@ -58,47 +74,39 @@
 
     async function cargarCitas() {
       lista.innerHTML = "";
-      const snapshot = await getDocs(collection(db, "citas"));
-      if (snapshot.empty) {
-        lista.innerHTML = `
-          <tr>
-            <td colspan="4">No hay citas registradas</td>
-          </tr>
-        `;
-        return;
+      try {
+        const snapshot = await getDocs(collection(db, "citas"));
+        if (snapshot.empty) {
+          lista.innerHTML = `
+            <tr>
+              <td colspan="4">No hay citas registradas</td>
+            </tr>
+          `;
+          return;
+        }
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          lista.innerHTML += `
+            <tr>
+              <td>${d.fecha || "-"}</td>
+              <td>${d.hora || "-"}</td>
+              <td>${d.nombre || "-"}</td>
+              <td>${d.servicio || "-"}</td>
+            </tr>
+          `;
+        });
+      } catch (error) {
+        console.error("Error al cargar citas:", error);
+        lista.innerHTML = `<tr><td colspan="4">Error al cargar citas</td></tr>`;
       }
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        lista.innerHTML += `
-          <tr>
-            <td>${d.fecha || "-"}</td>
-            <td>${d.hora || "-"}</td>
-            <td>${d.nombre || "-"}</td>
-            <td>${d.telefono || "-"}</td>
-          </tr>
-        `;
-      });
     }
 
     // Cargar las citas al iniciar
     cargarCitas();
+
+    // Recargar cada 5 segundos
+    setInterval(cargarCitas, 5000);
   </script>
-</head>
-<body>
-
-  <h2>📋 Agenda de Citas</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>Nombre</th>
-        <th>Teléfono</th>
-      </tr>
-    </thead>
-    <tbody id="listaCitas"></tbody>
-  </table>
 
 </body>
 </html>

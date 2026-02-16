@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda de Citas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
+    h1 { text-align: center; color: #d4af37; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #151515; }
+    th, td { border: 1px solid #444; padding: 12px; text-align: left; }
+    th { background: #222; color: #d4af37; }
+    tr:hover { background: #1a1a1a; }
+  </style>
+</head>
+<body>
+  <h1>📋 Agenda - JF Classic Barbería</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Cliente</th>
+        <th>Servicio</th>
+      </tr>
+    </thead>
+    <tbody id="citas"></tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
+      authDomain: "studio-8207835653-3046c.firebaseapp.com",
+      projectId: "studio-8207835653-3046c",
+      storageBucket: "studio-8207835653-3046c.firebasestorage.app",
+      messagingSenderId: "1083418746261",
+      appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const tbody = document.getElementById("citas");
+
+    async function cargar() {
+      try {
+        const snap = await getDocs(collection(db, "citas"));
+        tbody.innerHTML = "";
+        if (snap.empty) {
+          tbody.innerHTML = "<tr><td colspan='4'>Sin citas</td></tr>";
+          return;
+        }
+        snap.forEach(doc => {
+          const d = doc.data();
+          tbody.innerHTML += `<tr><td>${d.fecha}</td><td>${d.hora}</td><td>${d.nombre}</td><td>${d.servicio}</td></tr>`;
+        });
+      } catch(e) {
+        tbody.innerHTML = "<tr><td colspan='4'>Error: " + e.message + "</td></tr>";
+      }
+    }
+    cargar();
+    setInterval(cargar, 5000);
+  </script>
+</body>
+</html>

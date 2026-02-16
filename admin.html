@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Citas - Barbería</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #000; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h2>Lista de Clientes Agendados</h2>
+    <table id="tabla-citas">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Servicio</th>
+                <th>Día</th>
+                <th>Hora</th>
+            </tr>
+        </thead>
+        <tbody id="contenido-tabla">
+            </tbody>
+    </table>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Tu configuración que me pasaste
+        const firebaseConfig = {
+          apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
+          authDomain: "studio-8207835653-3046c.firebaseapp.com",
+          projectId: "studio-8207835653-3046c",
+          storageBucket: "studio-8207835653-3046c.firebasestorage.app",
+          messagingSenderId: "1083418746261",
+          appId: "1:1083418746261:web:0e43f9bfaa8dff994caa9c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // REFERENCIA A TU COLECCIÓN: 
+        // Cámbiala si tu colección no se llama "citas"
+        const citasRef = collection(db, "citas");
+
+        const tabla = document.getElementById('contenido-tabla');
+
+        // Escuchar cambios en tiempo real
+        onSnapshot(citasRef, (snapshot) => {
+            tabla.innerHTML = ""; // Limpiar tabla
+            snapshot.forEach((doc) => {
+                const cita = doc.data();
+                const fila = `
+                    <tr>
+                        <td>${cita.nombre || 'N/A'}</td>
+                        <td>${cita.servicio || 'N/A'}</td>
+                        <td>${cita.dia || cita.fecha || 'N/A'}</td>
+                        <td>${cita.hora || 'N/A'}</td>
+                    </tr>
+                `;
+                tabla.innerHTML += fila;
+            });
+        });
+    </script>
+</body>
+</html>

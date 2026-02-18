@@ -49,7 +49,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
@@ -72,44 +72,34 @@
 
   function generarHoras() {
     horaSelect.innerHTML = "";
-
     const agregar = (v) => {
       let h = Math.floor(v);
       let m = v % 1 === 0 ? "00" : "30";
       let ampm = h >= 12 ? "PM" : "AM";
       let h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-
       let textoHora = `${h12}:${m} ${ampm}`;
-
       let opt = document.createElement("option");
       opt.value = textoHora;
       opt.textContent = textoHora;
       horaSelect.appendChild(opt);
     };
-
     for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
     for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
   }
 
   async function cargarOcupadas() {
     generarHoras();
-
     try {
       const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
       const snap = await getDocs(q);
-
       const ocupadas = snap.docs.map(d => d.data().hora);
-
       [...horaSelect.options].forEach(opt => {
         if (ocupadas.includes(opt.value)) {
           opt.disabled = true;
           opt.textContent += " (Ocupado)";
         }
       });
-
-    } catch (e) {
-      console.error("Error al cargar citas:", e);
-    }
+    } catch (e) { console.error("Error al cargar:", e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -121,26 +111,41 @@
     const hora = horaSelect.value;
     const servicio = document.getElementById("servicio").value;
 
-    if (!nombre) {
-      alert("Por favor, escribe tu nombre.");
-      return;
+    if (!nombre || !hora) { 
+      alert("Por favor, ingresa tu nombre y selecciona una hora válida."); 
+      return; 
     }
 
-    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
-    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
-
     try {
-      await addDoc(collection(db, "citas"), {
+      // VALIDACIÓN DOBLE: Antes de guardar, verificamos si alguien la tomó
+      const q = query(collection(db, "citas"), where("fecha", "==", fecha), where("hora", "==", hora));
+      const validacion = await getDocs(q);
+
+      if (!validacion.empty) {
+        alert("¡Lo sentimos! Esta cita se acaba de ocupar. Por favor elige otra hora.");
+        cargarOcupadas();
+        return;
+      }
+
+      // Si está libre, la guardamos
+      await setDoc(doc(collection(db, "citas")), {
         nombre,
         servicio,
         fecha,
-        hora
+        hora,
+        timestamp: new Date()
       });
 
+      // Abrir WhatsApp
+      const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
+      window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
+      
+      alert("¡Cita reservada! Nos vemos en la barbería.");
       cargarOcupadas();
 
     } catch (e) {
-      console.error("Error al guardar cita:", e);
+      console.error("Error:", e);
+      alert("Hubo un problema al guardar la cita.");
     }
   }
 
@@ -148,7 +153,6 @@
     const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
   }
-
 </script>
 
 </body>

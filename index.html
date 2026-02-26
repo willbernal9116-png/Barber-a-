@@ -12,6 +12,7 @@
     label { display: block; margin-top: 14px; color: #d4af37; font-weight: bold; }
     input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; background: #0f0f0f; color: #fff; border: 1px solid #333; }
     .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; background: #d4af37; color: #111; font-weight: bold; cursor: pointer; border: none; }
+    .btn-reservar:disabled { background: #555; cursor: not-allowed; }
     .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; background: transparent; color: #d4af37; font-weight: 600; cursor: pointer; border: 1px solid #d4af37; }
     option:disabled { color: #555; background: #222; }
     .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
@@ -38,8 +39,8 @@
   <label>Hora</label>
   <select id="hora"></select>
 
-  <button class="btn-reservar" onclick="reservar()">Reservar por WhatsApp</button>
-  <button class="btn-compartir" onclick="compartirPagina()">📤 Compartir con un amigo</button>
+  <button class="btn-reservar" id="btn-reservar">Reservar por WhatsApp</button>
+  <button class="btn-compartir" id="btn-compartir">📤 Compartir con un amigo</button>
 
   <div class="footer-info">
     <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
@@ -49,7 +50,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
@@ -65,6 +66,7 @@
 
   const horaSelect = document.getElementById("hora");
   const fechaInput = document.getElementById("fecha");
+  const btnReservar = document.getElementById("btn-reservar");
 
   const hoy = new Date().toISOString().split('T')[0];
   fechaInput.setAttribute('min', hoy);
@@ -90,7 +92,11 @@
   async function cargarOcupadas() {
     generarHoras();
     try {
-      const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
+      // Ordenamos por fecha y luego por hora para que no aparezcan revueltas
+      const q = query(
+        collection(db, "citas"), 
+        where("fecha", "==", fechaInput.value)
+      );
       const snap = await getDocs(q);
       const ocupadas = snap.docs.map(d => d.data().hora);
       [...horaSelect.options].forEach(opt => {
@@ -105,29 +111,35 @@
   fechaInput.addEventListener("change", cargarOcupadas);
   cargarOcupadas();
 
-  window.reservar = async function() {
-    const nombre = document.getElementById("nombre").value;
+  // Función Principal de Reserva
+  btnReservar.addEventListener("click", async () => {
+    const nombre = document.getElementById("nombre").value.trim();
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
     const servicio = document.getElementById("servicio").value;
 
-    if (!nombre || !hora) { 
-      alert("Por favor, ingresa tu nombre y selecciona una hora válida."); 
+    if (!nombre || !hora || hora.includes("(Ocupado)")) { 
+      alert("⚠️ Por favor, ingresa tu nombre y selecciona un horario disponible."); 
       return; 
     }
 
+    btnReservar.disabled = true;
+    btnReservar.innerText = "Verificando disponibilidad...";
+
     try {
-      // VALIDACIÓN DOBLE: Antes de guardar, verificamos si alguien la tomó
+      // 1. VERIFICAR EN TIEMPO REAL SI SIGUE DISPONIBLE
       const q = query(collection(db, "citas"), where("fecha", "==", fecha), where("hora", "==", hora));
       const validacion = await getDocs(q);
 
       if (!validacion.empty) {
-        alert("¡Lo sentimos! Esta cita se acaba de ocupar. Por favor elige otra hora.");
+        alert("❌ ¡Lo sentimos! Alguien acaba de reservar este horario. Por favor, selecciona otra hora.");
         cargarOcupadas();
+        btnReservar.disabled = false;
+        btnReservar.innerText = "Reservar por WhatsApp";
         return;
       }
 
-      // Si está libre, la guardamos
+      // 2. GUARDAR EN FIREBASE
       await setDoc(doc(collection(db, "citas")), {
         nombre,
         servicio,
@@ -136,20 +148,31 @@
         timestamp: new Date()
       });
 
-      // Abrir WhatsApp
-      const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
-      window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
+      // 3. ENVIAR WHATSAPP (Solo si el guardado fue exitoso)
+      const msg = `*JF Classic Barbería*%0A` +
+                  `✅ *Reserva Confirmada*%0A%0A` +
+                  `👤 *Cliente:* ${nombre}%0A` +
+                  `📅 *Fecha:* ${fecha}%0A` +
+                  `⏰ *Hora:* ${hora}%0A` +
+                  `✂️ *Servicio:* ${servicio}`;
       
-      alert("¡Cita reservada! Nos vemos en la barbería.");
+      const urlWa = `https://wa.me/573008612063?text=${msg}`;
+      window.open(urlWa, "_blank");
+      
+      alert("✅ ¡Cita guardada! Serás redirigido a WhatsApp para la confirmación final.");
       cargarOcupadas();
+      document.getElementById("nombre").value = "";
 
     } catch (e) {
       console.error("Error:", e);
-      alert("Hubo un problema al guardar la cita.");
+      alert("Hubo un error al procesar tu cita. Inténtalo de nuevo.");
+    } finally {
+      btnReservar.disabled = false;
+      btnReservar.innerText = "Reservar por WhatsApp";
     }
-  }
+  });
 
-  window.compartirPagina = function() {
+  document.getElementById("btn-compartir").onclick = function() {
     const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
   }

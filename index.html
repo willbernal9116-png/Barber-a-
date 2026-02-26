@@ -13,16 +13,14 @@
     input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; background: #0f0f0f; color: #fff; border: 1px solid #333; }
     .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; background: #d4af37; color: #111; font-weight: bold; cursor: pointer; border: none; }
     .btn-reservar:disabled { background: #555; cursor: not-allowed; }
-    .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; background: transparent; color: #d4af37; font-weight: 600; cursor: pointer; border: 1px solid #d4af37; }
     option:disabled { color: #555; background: #222; }
-    .footer-info { margin-top: 25px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #2a2a2a; padding-top: 15px; }
   </style>
 </head>
 <body>
 
 <div class="card">
   <h1>JF Classic Barbería 💈</h1>
-  <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
+  <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
 
   <label>Nombre</label>
   <input id="nombre" placeholder="Tu nombre">
@@ -40,17 +38,11 @@
   <select id="hora"></select>
 
   <button class="btn-reservar" id="btn-reservar">Reservar por WhatsApp</button>
-  <button class="btn-compartir" id="btn-compartir">📤 Compartir con un amigo</button>
-
-  <div class="footer-info">
-    <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
-    <p>La cita se confirma automáticamente por chat.</p>
-  </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, where, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
@@ -92,11 +84,7 @@
   async function cargarOcupadas() {
     generarHoras();
     try {
-      // Ordenamos por fecha y luego por hora para que no aparezcan revueltas
-      const q = query(
-        collection(db, "citas"), 
-        where("fecha", "==", fechaInput.value)
-      );
+      const q = query(collection(db, "citas"), where("fecha", "==", fechaInput.value));
       const snap = await getDocs(q);
       const ocupadas = snap.docs.map(d => d.data().hora);
       [...horaSelect.options].forEach(opt => {
@@ -105,78 +93,61 @@
           opt.textContent += " (Ocupado)";
         }
       });
-    } catch (e) { console.error("Error al cargar:", e); }
+    } catch (e) { console.error(e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
   cargarOcupadas();
 
-  // Función Principal de Reserva
   btnReservar.addEventListener("click", async () => {
     const nombre = document.getElementById("nombre").value.trim();
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
     const servicio = document.getElementById("servicio").value;
 
-    if (!nombre || !hora || hora.includes("(Ocupado)")) { 
-      alert("⚠️ Por favor, ingresa tu nombre y selecciona un horario disponible."); 
-      return; 
+    if (!nombre || !hora || hora.includes("Ocupado")) {
+      alert("⚠️ Completa los datos correctamente.");
+      return;
     }
 
     btnReservar.disabled = true;
-    btnReservar.innerText = "Verificando disponibilidad...";
+    btnReservar.innerText = "Confirmando...";
 
     try {
-      // 1. VERIFICAR EN TIEMPO REAL SI SIGUE DISPONIBLE
       const q = query(collection(db, "citas"), where("fecha", "==", fecha), where("hora", "==", hora));
       const validacion = await getDocs(q);
 
       if (!validacion.empty) {
-        alert("❌ ¡Lo sentimos! Alguien acaba de reservar este horario. Por favor, selecciona otra hora.");
+        alert("❌ Este horario se ocupó. Elige otro.");
         cargarOcupadas();
-        btnReservar.disabled = false;
-        btnReservar.innerText = "Reservar por WhatsApp";
         return;
       }
 
-      // 2. GUARDAR EN FIREBASE
-      await setDoc(doc(collection(db, "citas")), {
-        nombre,
-        servicio,
-        fecha,
-        hora,
-        timestamp: new Date()
-      });
+      await setDoc(doc(collection(db, "citas")), { nombre, servicio, fecha, hora, timestamp: new Date() });
 
-      // 3. ENVIAR WHATSAPP (Solo si el guardado fue exitoso)
-      const msg = `*JF Classic Barbería*%0A` +
-                  `✅ *Reserva Confirmada*%0A%0A` +
-                  `👤 *Cliente:* ${nombre}%0A` +
-                  `📅 *Fecha:* ${fecha}%0A` +
-                  `⏰ *Hora:* ${hora}%0A` +
-                  `✂️ *Servicio:* ${servicio}`;
-      
-      const urlWa = `https://wa.me/573008612063?text=${msg}`;
-      window.open(urlWa, "_blank");
-      
-      alert("✅ ¡Cita guardada! Serás redirigido a WhatsApp para la confirmación final.");
+      // MENSAJE DE WHATSAPP FORMATEADO
+      const msg = 
+        `*JF CLASSIC BARBERÍA* 💈%0A` +
+        `✅ *RESERVA CONFIRMADA*%0A%0A` +
+        `👤 *Cliente:* ${nombre}%0A` +
+        `📅 *Fecha:* ${fecha}%0A` +
+        `⏰ *Hora:* ${hora}%0A` +
+        `✂️ *Servicio:* ${servicio}%0A%0A` +
+        `📍 *Dirección:* Cra 3 #3-60 sur, Barrio Los Andes%0A` +
+        `¡Te esperamos!`;
+
+      window.open(`https://wa.me/573008612063?text=${msg}`, "_blank");
+
+      alert("✅ Reserva exitosa.");
       cargarOcupadas();
       document.getElementById("nombre").value = "";
 
-    } catch (e) {
-      console.error("Error:", e);
-      alert("Hubo un error al procesar tu cita. Inténtalo de nuevo.");
-    } finally {
+    } catch (e) { alert("Error al reservar."); }
+    finally {
       btnReservar.disabled = false;
       btnReservar.innerText = "Reservar por WhatsApp";
     }
   });
-
-  document.getElementById("btn-compartir").onclick = function() {
-    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-  }
 </script>
-
 </body>
 </html>

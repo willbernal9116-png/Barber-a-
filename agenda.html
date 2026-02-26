@@ -1,35 +1,44 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Agenda de Citas</title>
+  <title>Agenda de Citas - JF Classic</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
-    h1 { text-align: center; color: #d4af37; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #151515; }
-    th, td { border: 1px solid #444; padding: 12px; text-align: left; }
-    th { background: #222; color: #d4af37; }
-    tr:hover { background: #1a1a1a; }
+    body { background: #0b0b0b; color: #fff; font-family: 'Segoe UI', Arial; padding: 20px; }
+    h1 { text-align: center; color: #d4af37; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+    .container { max-width: 900px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #151515; border-radius: 10px; overflow: hidden; }
+    th, td { border: 1px solid #2a2a2a; padding: 14px; text-align: left; }
+    th { background: #d4af37; color: #111; font-weight: bold; }
+    tr:nth-child(even) { background: #1a1a1a; }
+    tr:hover { background: #222; transition: 0.3s; }
+    .status-badge { background: #28a745; color: white; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
   </style>
 </head>
 <body>
-  <h1>📋 Agenda - JF Classic Barbería</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Hora</th>
-        <th>Cliente</th>
-        <th>Servicio</th>
-      </tr>
-    </thead>
-    <tbody id="citas"></tbody>
-  </table>
+  <div class="container">
+    <h1>📋 Agenda de Citas</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Cliente</th>
+          <th>Servicio</th>
+        </tr>
+      </thead>
+      <tbody id="citas">
+        <tr><td colspan="4" style="text-align:center;">Cargando citas...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+    // IMPORTANTE: Añadimos 'query' y 'orderBy'
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDH78ZyXWZ2kvXSwV9yU7fYudz_9b_1kak",
@@ -46,22 +55,40 @@
 
     async function cargar() {
       try {
-        const snap = await getDocs(collection(db, "citas"));
+        // ORDENAMOS: Primero por fecha (ascendente) y luego por hora
+        const q = query(
+          collection(db, "citas"), 
+          orderBy("fecha", "asc"), 
+          orderBy("hora", "asc")
+        );
+        
+        const snap = await getDocs(q);
         tbody.innerHTML = "";
+        
         if (snap.empty) {
-          tbody.innerHTML = "<tr><td colspan='4'>Sin citas</td></tr>";
+          tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No hay citas programadas</td></tr>";
           return;
         }
+
         snap.forEach(doc => {
           const d = doc.data();
-          tbody.innerHTML += `<tr><td>${d.fecha}</td><td>${d.hora}</td><td>${d.nombre}</td><td>${d.servicio}</td></tr>`;
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${d.fecha}</strong></td>
+              <td>${d.hora}</td>
+              <td>${d.nombre}</td>
+              <td><span class="status-badge">${d.servicio}</span></td>
+            </tr>`;
         });
       } catch(e) {
-        tbody.innerHTML = "<tr><td colspan='4'>Error: " + e.message + "</td></tr>";
+        console.error(e);
+        tbody.innerHTML = "<tr><td colspan='4'>Error al cargar: " + e.message + "</td></tr>";
       }
     }
+
     cargar();
-    setInterval(cargar, 5000);
+    // Actualiza cada 30 segundos para no saturar la base de datos
+    setInterval(cargar, 30000);
   </script>
 </body>
 </html>

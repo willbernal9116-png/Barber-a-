@@ -57,24 +57,22 @@
           return;
         }
 
-        // Convertimos a un array para poder ordenarlo aquí mismo
         let listaCitas = [];
         snap.forEach(doc => {
           listaCitas.push(doc.data());
         });
 
-        // ORDENAR POR FECHA Y LUEGO POR HORA (Sin usar índices de Firebase)
+        // ORDEN INVERSO: De lo más nuevo a lo más antiguo
         listaCitas.sort((a, b) => {
-          // Primero comparamos la fecha
-          if (a.fecha > b.fecha) return 1;
-          if (a.fecha < b.fecha) return -1;
-          // Si la fecha es igual, comparamos la hora
-          if (a.hora > b.hora) return 1;
-          if (a.hora < b.hora) return -1;
+          // Primero comparamos la fecha (b contra a para orden descendente)
+          if (a.fecha < b.fecha) return 1;
+          if (a.fecha > b.fecha) return -1;
+          // Si la fecha es igual, comparamos la hora (b contra a)
+          if (a.hora < b.hora) return 1;
+          if (a.hora > b.hora) return -1;
           return 0;
         });
 
-        // Dibujamos la tabla ya ordenada
         listaCitas.forEach(d => {
           tbody.innerHTML += `<tr>
             <td><strong>${d.fecha}</strong></td>
@@ -90,7 +88,7 @@
     }
 
     cargar();
-    setInterval(cargar, 15000); // Se actualiza cada 15 segundos
+    setInterval(cargar, 15000);
   </script>
 </body>
 </html>

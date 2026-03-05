@@ -75,6 +75,9 @@
 
   function generarHoras() {
     horaSelect.innerHTML = "";
+    const fechaSeleccionada = new Date(fechaInput.value + 'T00:00:00');
+    const esDomingo = fechaSeleccionada.getDay() === 0;
+
     const agregar = (v) => {
       let h = Math.floor(v);
       let m = v % 1 === 0 ? "00" : "30";
@@ -86,8 +89,15 @@
       opt.textContent = textoHora;
       horaSelect.appendChild(opt);
     };
-    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
-    for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
+
+    if (esDomingo) {
+      // Domingo: 9:30 AM a 1:30 PM
+      for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
+    } else {
+      // Lunes a Sábado: Horario normal
+      for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
+      for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
+    }
   }
 
   async function cargarOcupadas() {
@@ -141,7 +151,7 @@
         `📅 *Fecha:* ${fecha}%0A` +
         `⏰ *Hora:* ${hora}%0A` +
         `✂️ *Servicio:* ${servicio}%0A%0A` +
-        `📍 *Dirección:* Cra 3 #3-60 sur, Barrio Los Andes%0A` +
+        `*Nota:* llegar 10 minutos antes de reto%0A` +
         `¡Te esperamos!`;
 
       window.open(`https://wa.me/573008612063?text=${msg}`, "_blank");

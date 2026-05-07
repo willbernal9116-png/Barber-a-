@@ -31,10 +31,10 @@
     }
 
     .remodelacion-img {
-      width: 100%; /* Ocupa el ancho del cuadro */
+      width: 100%;
       max-width: 400px;
       border-radius: 10px;
-      border: 2px solid #d4af37; /* Marco dorado */
+      border: 2px solid #d4af37;
       box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
       display: block;
       margin: 0 auto;
@@ -91,7 +91,7 @@
       background: #0f0f0f;
       color: #fff;
       font-size: 15px;
-      box-sizing: border-box; /* Evita que se salga del cuadro */
+      box-sizing: border-box;
     }
 
     input:focus, select:focus {
@@ -147,7 +147,7 @@
   <h1>JF Classic 💈</h1>
   
   <div class="remodelacion-container">
-    <img src="assets/remodelacion.png" alt="Remodelación en proceso" class="remodelacion-img">
+    <img src="remodelacion.png" alt="Remodelación en proceso" class="remodelacion-img">
   </div>
 
   <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
@@ -182,7 +182,6 @@
 </div>
 
 <script type="module">
-  // ... (Tu código de Firebase se mantiene exactamente igual aquí)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 

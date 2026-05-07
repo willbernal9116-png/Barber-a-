@@ -16,10 +16,8 @@
     .stars-text { font-weight: bold; color: #fff; font-size: 16px; }
     label { display: block; margin-top: 14px; font-weight: 600; color: #d4af37; }
     input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #333; background: #0f0f0f; color: #fff; font-size: 15px; box-sizing: border-box; }
-    input:focus, select:focus { outline: none; border-color: #d4af37; }
-    .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; border: none; background: #d4af37; color: #111; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; }
-    .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; border: 1px solid #d4af37; background: transparent; color: #d4af37; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-    button:hover { transform: scale(1.02); opacity: 0.9; }
+    .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; border: none; background: #d4af37; color: #111; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn-compartir { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; border: 1px solid #d4af37; background: transparent; color: #d4af37; font-size: 14px; font-weight: 600; cursor: pointer; }
     .footer-info { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }
   </style>
 </head>
@@ -46,10 +44,6 @@
   <div class="stars-section">
     <div class="stars">★★★★★</div>
     <div class="stars-text">¡Súper Recomendado!</div>
-    <div style="font-size: 12px; color: #888;">Más de 500 clientes satisfechos</div>
-  </div>
-  <div class="footer-info">
-    <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
   </div>
 </div>
 
@@ -73,63 +67,58 @@
   const fechaInput = document.getElementById("fecha");
 
   const hoy = new Date();
-  const fechaHoy = hoy.toISOString().split('T')[0];
-  fechaInput.setAttribute('min', fechaHoy);
-  fechaInput.value = fechaHoy;
-
-  function agregarHora(valor) {
-    let h = Math.floor(valor);
-    let m = valor % 1 === 0 ? "00" : "30";
-    let ampm = h >= 12 ? "PM" : "AM";
-    let h12 = h > 12 ? h - 12 : h;
-    if (h12 === 0) h12 = 12;
-    const texto = `${h12}:${m} ${ampm}`;
-    const option = document.createElement("option");
-    option.value = texto;
-    option.textContent = texto;
-    horaSelect.appendChild(option);
-  }
+  fechaInput.value = hoy.toISOString().split('T')[0];
+  fechaInput.setAttribute('min', fechaInput.value);
 
   function generarHoras() {
     horaSelect.innerHTML = "";
-    for (let t = 9.5; t <= 13.5; t += 0.5) { agregarHora(t); } 
-    for (let t = 15; t <= 19.5; t += 0.5) { agregarHora(t); } 
+    const horas = [9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5];
+    horas.forEach(t => {
+      let h = Math.floor(t);
+      let m = t % 1 === 0 ? "00" : "30";
+      let ampm = h >= 12 ? "PM" : "AM";
+      let h12 = h > 12 ? h - 12 : h;
+      if (h12 === 0) h12 = 12;
+      let texto = `${h12}:${m} ${ampm}`;
+      let option = document.createElement("option");
+      option.value = texto;
+      option.textContent = texto;
+      horaSelect.appendChild(option);
+    });
   }
 
   async function cargarHorasOcupadas() {
     const fecha = fechaInput.value;
-    if (!fecha) return;
     generarHoras();
-    const q = query(collection(db, "citas"), where("fecha", "==", fecha));
-    const snapshot = await getDocs(q);
-    const ocupadas = snapshot.docs.map(d => d.data().hora);
-    [...horaSelect.options].forEach(opt => {
-      if (ocupadas.includes(opt.value)) {
-        opt.disabled = true;
-        opt.textContent += " (Ocupado)";
-      }
-    });
+    try {
+      const q = query(collection(db, "citas"), where("fecha", "==", fecha));
+      const snapshot = await getDocs(q);
+      const ocupadas = snapshot.docs.map(d => d.data().hora);
+      Array.from(horaSelect.options).forEach(opt => {
+        if (ocupadas.includes(opt.value)) {
+          opt.disabled = true;
+          opt.textContent += " (Ocupado)";
+        }
+      });
+    } catch (e) { console.error("Error al cargar:", e); }
   }
 
-  // ESTO ERA LO QUE FALTABA: Inicializar la carga
+  // Ejecución inmediata
   cargarHorasOcupadas();
   fechaInput.addEventListener("change", cargarHorasOcupadas);
 
-  window.reservar = async function () {
+  window.reservar = async function() {
     const nombre = document.getElementById("nombre").value;
     const servicio = document.getElementById("servicio").value;
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
-    if (!nombre || !fecha || !hora) { alert("Por favor, ingresa tu nombre."); return; }
+    if (!nombre) { alert("Pon tu nombre"); return; }
     await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-    const msg = `Hola, soy ${nombre}. Quiero apartar cita el día ${fecha} a las ${hora}. Servicio: ${servicio}`;
-    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/573008612063?text=Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}.`, "_blank");
     cargarHorasOcupadas();
-  }
+  };
 
-  window.compartirPagina = function() {
-    window.open(`https://wa.me/?text=${encodeURIComponent('¡Te recomiendo la Barbería JF Classic! Agenda aquí: ' + window.location.href)}`, "_blank");
-  }
+  window.compartirPagina = () => window.open(`https://wa.me/?text=Agenda en JF Classic: ${window.location.href}`, "_blank");
 </script>
 </body>
 </html>

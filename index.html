@@ -4,24 +4,151 @@
   <meta charset="UTF-8">
   <title>JF Classic Barbería - Reservas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #0b0b0b, #1a1a1a); color: #f5f5f5; padding: 20px; }
-    .card { max-width: 500px; margin: auto; background: #151515; padding: 24px; border-radius: 14px; box-shadow: 0 0 20px rgba(212,175,55,0.15); border: 1px solid #2a2a2a; }
-    h1 { text-align: center; color: #d4af37; margin-bottom: 10px; }
-    .remodelacion-img { width: 100%; max-width: 400px; border-radius: 10px; border: 2px solid #d4af37; display: block; margin: 0 auto 20px; box-shadow: 0 0 15px rgba(212,175,55,0.3); }
-    p { text-align: center; font-size: 14px; color: #ccc; }
-    label { display: block; margin-top: 14px; font-weight: 600; color: #d4af37; }
-    input, select { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #333; background: #0f0f0f; color: #fff; font-size: 15px; box-sizing: border-box; }
-    .btn-reservar { width: 100%; padding: 12px; margin-top: 22px; border-radius: 10px; border: none; background: #d4af37; color: #111; font-size: 16px; font-weight: bold; cursor: pointer; }
-    .stars-section { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; color: #d4af37; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(180deg, #0b0b0b, #1a1a1a);
+      color: #f5f5f5;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 500px;
+      margin: auto;
+      background: #151515;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(212,175,55,0.15);
+      border: 1px solid #2a2a2a;
+    }
+
+    /* Estilo para la imagen de remodelación */
+    .remodelacion-container {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .remodelacion-img {
+      width: 100%; /* Ocupa el ancho del cuadro */
+      max-width: 400px;
+      border-radius: 10px;
+      border: 2px solid #d4af37; /* Marco dorado */
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+      display: block;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    p {
+      text-align: center;
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+
+    /* Sección de estrellas */
+    .stars-section {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 1px solid #333;
+    }
+
+    .stars {
+      color: #d4af37;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .stars-text {
+      font-weight: bold;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: 600;
+      color: #d4af37;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #0f0f0f;
+      color: #fff;
+      font-size: 15px;
+      box-sizing: border-box; /* Evita que se salga del cuadro */
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    .btn-reservar {
+      width: 100%;
+      padding: 12px;
+      margin-top: 22px;
+      border-radius: 10px;
+      border: none;
+      background: #d4af37;
+      color: #111;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-compartir {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border-radius: 10px;
+      border: 1px solid #d4af37;
+      background: transparent;
+      color: #d4af37;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+
+    .footer-info {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
+
 <body>
 
 <div class="card">
-  <h1>JF Classic Barbería 💈</h1>
+  <h1>JF Classic 💈</h1>
   
-  <img src="remodelacion.png" alt="Remodelación" class="remodelacion-img">
+  <div class="remodelacion-container">
+    <img src="assets/remodelacion.png" alt="Remodelación en proceso" class="remodelacion-img">
+  </div>
 
   <p><strong>Dirección:</strong> Cra 3 #3-60 sur, Barrio Los Andes</p>
 
@@ -41,14 +168,21 @@
   <select id="hora"></select>
 
   <button class="btn-reservar" onclick="reservar()">Reservar por WhatsApp</button>
+  <button class="btn-compartir" onclick="compartirPagina()">📤 Compartir con un amigo</button>
 
   <div class="stars-section">
-    <div>★★★★★</div>
-    <div style="color: #fff; font-weight: bold;">Súper Recomendado</div>
+    <div class="stars">★★★★★</div>
+    <div class="stars-text">¡Súper Recomendado!</div>
+    <div style="font-size: 12px; color: #888;">Más de 500 clientes satisfechos</div>
+  </div>
+
+  <div class="footer-info">
+    <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
   </div>
 </div>
 
 <script type="module">
+  // ... (Tu código de Firebase se mantiene exactamente igual aquí)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
@@ -72,39 +206,40 @@
   fechaInput.setAttribute('min', fechaHoy);
   fechaInput.value = fechaHoy;
 
+  function agregarHora(valor) {
+    let h = Math.floor(valor);
+    let m = valor % 1 === 0 ? "00" : "30";
+    let ampm = h >= 12 ? "PM" : "AM";
+    let h12 = h > 12 ? h - 12 : h;
+    if (h12 === 0) h12 = 12;
+
+    const texto = `${h12}:${m} ${ampm}`;
+    const option = document.createElement("option");
+    option.value = texto;
+    option.textContent = texto;
+    horaSelect.appendChild(option);
+  }
+
   function generarHoras() {
     horaSelect.innerHTML = "";
-    const slots = [9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5];
-    slots.forEach(t => {
-      let h = Math.floor(t);
-      let m = t % 1 === 0 ? "00" : "30";
-      let ampm = h >= 12 ? "PM" : "AM";
-      let h12 = h > 12 ? h - 12 : h;
-      if (h12 === 0) h12 = 12;
-      let texto = `${h12}:${m} ${ampm}`;
-      let option = document.createElement("option");
-      option.value = texto;
-      option.textContent = texto;
-      horaSelect.appendChild(option);
-    });
+    for (let t = 9.5; t <= 13.5; t += 0.5) { agregarHora(t); } 
+    for (let t = 15; t <= 19.5; t += 0.5) { agregarHora(t); } 
   }
 
   async function cargarHorasOcupadas() {
-    generarHoras();
     const fecha = fechaInput.value;
-    try {
-      const q = query(collection(db, "citas"), where("fecha", "==", fecha));
-      const snapshot = await getDocs(q);
-      const ocupadas = snapshot.docs.map(d => d.data().hora);
-      Array.from(horaSelect.options).forEach(opt => {
-        if (ocupadas.includes(opt.value)) {
-          opt.disabled = true;
-          opt.textContent += " (Ocupado)";
-        }
-      });
-    } catch (e) {
-      console.error("Error cargando agenda:", e);
-    }
+    if (!fecha) return;
+    generarHoras();
+    const q = query(collection(db, "citas"), where("fecha", "==", fecha));
+    const snapshot = await getDocs(q);
+    const ocupadas = snapshot.docs.map(d => d.data().hora);
+
+    [...horaSelect.options].forEach(opt => {
+      if (ocupadas.includes(opt.value)) {
+        opt.disabled = true;
+        opt.textContent += " (Ocupado)";
+      }
+    });
   }
 
   cargarHorasOcupadas();
@@ -115,12 +250,27 @@
     const servicio = document.getElementById("servicio").value;
     const fecha = fechaInput.value;
     const hora = horaSelect.value;
-    if (!nombre) { alert("Ingresa tu nombre"); return; }
+
+    if (!nombre || !fecha || !hora) {
+      alert("Por favor, ingresa tu nombre.");
+      return;
+    }
+
     await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-    const msg = `Hola, soy ${nombre}. Cita el ${fecha} a las ${hora}.`;
-    window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
+
+    const msg = `Hola, soy ${nombre}. Quiero apartar cita el día ${fecha} a las ${hora}. Servicio: ${servicio}`;
+    const url = `https://wa.me/573008612063?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
     cargarHorasOcupadas();
   }
+
+  window.compartirPagina = function() {
+    const urlPagina = window.location.href;
+    const textoCompartir = `¡Hola! Te recomiendo la Barbería JF Classic. Puedes agendar tu cita aquí: ${urlPagina}`;
+    const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(textoCompartir)}`;
+    window.open(urlWhatsApp, "_blank");
+  }
 </script>
+
 </body>
 </html>

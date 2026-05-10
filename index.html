@@ -52,7 +52,6 @@
 
   <div class="footer-info">
     <p>📍 Cra 3 #3-60 sur, Barrio Los Andes</p>
-    <p>La cita se confirma automáticamente por chat.</p>
   </div>
 </div>
 
@@ -81,8 +80,6 @@
 
   function generarHoras() {
     horaSelect.innerHTML = "";
-    
-    // Detectar si el día seleccionado es Domingo (0 es Domingo en JavaScript)
     const fechaSeleccionada = new Date(fechaInput.value + "T00:00:00");
     const esDomingo = fechaSeleccionada.getDay() === 0;
 
@@ -94,10 +91,10 @@
       horaSelect.appendChild(opt);
     };
 
-    // Horario de mañana: 9:30 AM a 1:30 PM (última cita 1:00 PM)
+    // Mañana para todos los días
     for (let t = 9.5; t <= 13; t += 0.5) agregar(t);
 
-    // Si NO es domingo, agregar el horario de la tarde
+    // Tarde SOLO si no es domingo
     if (!esDomingo) {
       for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
     }
@@ -115,7 +112,7 @@
           opt.textContent += " (Ocupado)";
         }
       });
-    } catch (e) { console.error("Error al cargar citas:", e); }
+    } catch (e) { console.error(e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -123,24 +120,11 @@
 
   window.reservar = async function() {
     const nombre = document.getElementById("nombre").value;
-    const fecha = fechaInput.value;
-    const hora = horaSelect.value;
-    const servicio = document.getElementById("servicio").value;
-
-    if(!nombre) return alert("Por favor, escribe tu nombre.");
-
-    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
+    if(!nombre) return alert("Escribe tu nombre");
+    const msg = `Hola, soy ${nombre}. Cita: ${fechaInput.value} a las ${horaSelect.value}.`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
-
-    try {
-      await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
-      cargarOcupadas();
-    } catch(e) { console.error("Error al guardar cita:", e); }
-  }
-
-  window.compartirPagina = function() {
-    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    await addDoc(collection(db, "citas"), { nombre, servicio: document.getElementById("servicio").value, fecha: fechaInput.value, hora: horaSelect.value });
+    cargarOcupadas();
   }
 </script>
 </body>

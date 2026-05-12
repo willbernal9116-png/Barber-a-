@@ -91,10 +91,10 @@
       horaSelect.appendChild(opt);
     };
 
-    // Mañana para todos los días
-    for (let t = 9.5; t <= 13; t += 0.5) agregar(t);
+    // MAÑANA: 9:30 AM a 1:30 PM (Último turno 1:30 PM)
+    for (let t = 9.5; t <= 13.5; t += 0.5) agregar(t);
 
-    // Tarde SOLO si no es domingo
+    // TARDE: SOLO si NO es domingo (Desde 3:00 PM hasta 7:30 PM)
     if (!esDomingo) {
       for (let t = 15; t <= 19.5; t += 0.5) agregar(t);
     }
@@ -112,7 +112,7 @@
           opt.textContent += " (Ocupado)";
         }
       });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error al cargar citas:", e); }
   }
 
   fechaInput.addEventListener("change", cargarOcupadas);
@@ -120,11 +120,24 @@
 
   window.reservar = async function() {
     const nombre = document.getElementById("nombre").value;
-    if(!nombre) return alert("Escribe tu nombre");
-    const msg = `Hola, soy ${nombre}. Cita: ${fechaInput.value} a las ${horaSelect.value}.`;
+    const fecha = fechaInput.value;
+    const hora = horaSelect.value;
+    const servicio = document.getElementById("servicio").value;
+
+    if(!nombre) return alert("Por favor, escribe tu nombre.");
+
+    const msg = `Hola, soy ${nombre}. Cita: ${fecha} a las ${hora}. Servicio: ${servicio}`;
     window.open(`https://wa.me/573008612063?text=${encodeURIComponent(msg)}`, "_blank");
-    await addDoc(collection(db, "citas"), { nombre, servicio: document.getElementById("servicio").value, fecha: fechaInput.value, hora: horaSelect.value });
-    cargarOcupadas();
+
+    try {
+      await addDoc(collection(db, "citas"), { nombre, servicio, fecha, hora });
+      cargarOcupadas();
+    } catch(e) { console.error("Error al guardar cita:", e); }
+  }
+
+  window.compartirPagina = function() {
+    const texto = `¡Te recomiendo la Barbería JF Classic! Aparta tu cita aquí: ${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
   }
 </script>
 </body>
